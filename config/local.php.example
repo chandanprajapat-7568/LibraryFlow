@@ -1,0 +1,13 @@
+<?php
+// Copy this file to config/local.php and change values if your local MySQL setup differs.
+return [
+    'host' => '127.0.0.1',
+    'port' => 3306,
+    'database' => 'libraryflow',
+    'username' => 'root',
+    'password' => '',
+    // Public base URL for password-reset links (include /libraryflow for a default XAMPP install).
+    'public_url' => 'http://localhost/libraryflow',
+    // Must match the sender configured in PHP's mail transport.
+    'mail_from' => 'libraryflow@example.org',
+];

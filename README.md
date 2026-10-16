@@ -39,7 +39,7 @@ For a project installed in another folder under htdocs, the application derives 
 
 ## Database and sample data
 
-database/libraryflow.sql creates the catalogue, member, issue, staff-user and login-throttling tables. It does not insert staff passwords. database/libraryflow_demo_data.sql contains Project Gutenberg catalogue metadata only and records its source. The local roster seed contains names and roll numbers from the supplied college list and is ignored by Git.
+database/libraryflow.sql creates the catalogue, member, issue, staff-user, login-throttling and password-recovery tables. It does not insert staff passwords. database/libraryflow_demo_data.sql contains Project Gutenberg catalogue metadata only and records its source. Any approved real-student roster import is supplied and stored locally outside this public repository.
 
 Do not add real student contact data, borrowing history, database exports or backups to a public repository. Use only synthetic records for public screenshots. If sensitive information has already been committed, deleting the file in a later commit does not remove it from earlier Git history; follow GitHub's sensitive-data removal guidance.
 

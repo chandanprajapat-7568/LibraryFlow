@@ -31,7 +31,7 @@ LibraryFlow ERP is a local, database-backed application for a single college lib
 
 The project objectives are to:
 
-- Maintain book and member records with create, read, update and delete operations.
+- Maintain book and member records; only administrators can delete records.
 - Search the catalogue by title, author or book ID and search members by name, code or ID.
 - Issue a copy to a registered member only when a copy is available.
 - Record returns once and preserve completed issue history.
@@ -219,15 +219,15 @@ The authoritative DDL is `database/libraryflow.sql`. The foreign keys use `ON DE
 | --- | --- |
 | Staff access | Authenticates administrators and librarians, throttles repeated failed sign-ins, expires inactive sessions, and lets administrators manage librarian passwords and access. Administrators are protected from staff-management actions. Staff can change their password or request a one-use email recovery link. Password entries can be shown or hidden; new passwords require 8 characters, a lowercase letter, an uppercase letter and a special character. |
 | Dashboard | Shows book titles, total/issued/available copies, registered members, overdue loans and recent issue records. Every count is queried from the database. |
-| Books | Adds, lists, edits, searches and deletes eligible titles. Duplicate ISBN values are rejected. Copy totals cannot be reduced below open loans. |
-| Members | Adds, lists, edits, searches and deletes eligible borrowers. Member codes are unique. Contact details are optional and validated when entered. |
+| Books | Staff can add, list, edit and search titles; only administrators can delete eligible titles. Duplicate ISBN values are rejected. Copy totals cannot be reduced below open loans. |
+| Members | Staff can add, list, edit and search borrowers; only administrators can delete eligible members. Member codes are unique. Contact details are optional and validated when entered. |
 | Issue / return | Issues available copies to eligible members, validates date order and records a return once. An outstanding overdue issue blocks more borrowing. A book returned late starts a 10-day borrowing hold from the return date. The issue history is retained. |
 | Search | Searches book titles, authors and IDs, as well as member names, codes and IDs. Empty results are explained. |
 | Reports | Shows inventory totals by title and an issue register filterable by open, returned and overdue status. |
 
 ## 6. CRUD, search and lending behavior
 
-Book and member forms validate submitted values in PHP. Search values and writes use mysqli prepared statements. Values shown in tables are HTML-escaped. Record updates use the existing primary key; deletes use a confirmation page and POST. MySQL foreign keys prevent removing a book or member with lending history.
+Book and member forms validate submitted values in PHP. Search values and writes use mysqli prepared statements. Values shown in tables are HTML-escaped. Record updates use the existing primary key; administrator deletes use a confirmation page and POST. MySQL foreign keys prevent removing a book or member with lending history.
 
 To issue a title, the server locks its book row and member row, confirms the member is not blocked by an open overdue loan or a late-return hold, then checks the count of open loans against total copies before inserting an issue record. The form proposes a 14-calendar-day loan. Faculty/library confirmation of that loan period is still required. Returning an issue locks the issue row and rejects a second return or a date earlier than issue date. A late return is recorded in the existing issue history; its hold end date is derived from that returned loan.
 

@@ -1,7 +1,6 @@
 <?php
 require dirname(__DIR__) . '/includes/bootstrap.php';
 $conn = db();
-$currentUser = current_user();
 $query = query_string('q');
 $query = limit_text($query, 100);
 $sql = 'SELECT m.member_id, m.member_code, m.full_name, m.course, m.semester, m.phone, m.email,
@@ -56,7 +55,7 @@ render_header('Members', 'members');
                     <td><?= e($member['email'] ?: 'Not supplied') ?></td>
                     <td><?= (int) $member['open_loans'] ?></td>
                     <td><?php if ((int) $member['overdue_open'] > 0): ?><span class="account-status is-disabled">Overdue loan outstanding</span><?php elseif ($member['suspended_until'] !== null && $member['suspended_until'] > date('Y-m-d')): ?><span class="account-status is-disabled">Borrowing hold</span><span class="cell-sub">Until <?= e(display_date($member['suspended_until'])) ?></span><?php else: ?>Eligible to borrow<?php endif; ?></td>
-                    <td class="row-actions"><a href="<?= e(url('/members/form.php?id=' . (int) $member['member_id'])) ?>">Edit</a><?php if (($currentUser['role'] ?? '') === 'admin'): ?><a class="danger-link" href="<?= e(url('/members/delete.php?id=' . (int) $member['member_id'])) ?>">Delete</a><?php endif; ?></td>
+                    <td class="row-actions"><a href="<?= e(url('/members/form.php?id=' . (int) $member['member_id'])) ?>">Edit</a><a class="danger-link" href="<?= e(url('/members/delete.php?id=' . (int) $member['member_id'])) ?>">Delete</a></td>
                 </tr>
             <?php endwhile; ?>
             </tbody>

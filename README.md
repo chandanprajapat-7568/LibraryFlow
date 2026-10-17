@@ -13,7 +13,7 @@ The repository contains the application source, SQL schema, synthetic catalogue 
 - Require staff sign-in; staff can change their passwords, and administrators can reset librarian passwords, deactivate or reactivate librarian access, and permanently remove librarian accounts. Administrator accounts are protected from staff-management actions.
 - Let staff show or hide password entries and request a one-use password reset link by email. Reset links expire after one hour, are stored as hashes, and revoke existing sessions after a password change. Administrators can still set a librarian password if email recovery is unavailable.
 - Require new passwords to be at least 8 characters and include a lowercase letter, an uppercase letter and a special character. A late return starts a 10-day borrowing hold after the book is returned; an outstanding overdue loan also blocks new issues.
-- Restrict destructive book/member deletes to administrators.
+- Let any signed-in staff member delete eligible book and member records; issue history remains protected by foreign keys.
 - Keep real student roster data out of the public repository and HTTP-accessible database files.
 
 ## Architecture diagram
@@ -29,7 +29,7 @@ flowchart LR
         BookDelete["Book delete handler<br/>books/delete.php"]
         BookList -->|Add or edit| BookForm
         BookForm -->|POST form values| BookSave
-        BookList -->|Administrator opens delete confirmation| BookDelete
+        BookList -->|Signed-in staff opens delete confirmation| BookDelete
     end
 
     subgraph MemberWorkflow[Member records]
@@ -39,7 +39,7 @@ flowchart LR
         MemberDelete["Member delete handler<br/>members/delete.php"]
         MemberList -->|Add or edit| MemberForm
         MemberForm -->|POST form values| MemberSave
-        MemberList -->|Administrator opens delete confirmation| MemberDelete
+        MemberList -->|Signed-in staff opens delete confirmation| MemberDelete
     end
 
     Staff --> BookList
@@ -76,7 +76,7 @@ flowchart LR
     Database -->|mysqli queries| Issues
 ```
 
-`books/save.php` and `members/save.php` process submitted forms: they insert a record when no record ID is supplied and update the matching record when editing. The list pages link to the form pages. The delete links appear only for administrators; the delete handlers require a CSRF-protected POST before removing a record. Database foreign keys prevent deletion when a book or member has issue history.
+`books/save.php` and `members/save.php` process submitted forms: they insert a record when no record ID is supplied and update the matching record when editing. The list pages link to the form pages. Any signed-in staff member can open a delete confirmation; the delete handlers require a CSRF-protected POST before removing a record. Database foreign keys prevent deletion when a book or member has issue history.
 
 ## Requirements
 
@@ -108,7 +108,9 @@ Do not add real student contact data, borrowing history, database exports or bac
 ## Roles
 
 - Administrator: all library operations, deletes, and staff account/role management.
-- Librarian: catalogue, member, issue, return, search and report operations; cannot delete records or manage staff access.
+- Librarian: catalogue, member, issue, return, search, reports and book/member deletes; cannot manage staff access.
+
+The first administrator is created through `setup.php`. The account's name, email, role and password hash are stored in the `users` table in the `libraryflow` database. The plain password is not saved; `config/local.php` contains database connection settings, not the administrator's password.
 
 Passwords are hashed with PHP's password hashing API. Failed sign-in attempts and password reset requests are temporarily rate-limited by hashed email/IP keys. Reset tokens are random, one-use, expire after one hour, and only their SHA-256 hashes are stored. Sessions use HTTP-only, SameSite cookies, secure cookies when HTTPS is detected, expire after 30 minutes of inactivity, and rotate after sign-in and password changes. Changing or resetting a password invalidates other active sessions for that account.
 

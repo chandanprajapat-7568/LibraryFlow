@@ -329,10 +329,11 @@ $adminOnly = Invoke-App '/admin/users.php' $librarianSession
 Assert-Condition ($adminOnly.StatusCode -eq 403) 'librarian is denied staff-management access'
 $staffPasswordDenied = Invoke-App ("/admin/password.php?id=$librarianId") $librarianSession
 Assert-Condition ($staffPasswordDenied.StatusCode -eq 403) 'librarian cannot use administrator password reset'
-$deleteDenied = Invoke-App ("/books/delete.php?id=$secondBookId") $librarianSession
-Assert-Condition ($deleteDenied.StatusCode -eq 403) 'librarian is denied destructive book actions'
+$librarianDeletePage = Invoke-App ("/books/delete.php?id=$secondBookId") $librarianSession
+Assert-Condition ($librarianDeletePage.StatusCode -eq 200 -and $librarianDeletePage.Content.Contains('Delete book record')) 'librarian can open a book delete confirmation'
 $librarianBookList = Invoke-App '/books/index.php?q=Smoke%20Test' $librarianSession
-Assert-Condition (-not $librarianBookList.Content.Contains('Delete</a>')) 'librarian does not see delete actions'
+$librarianMemberList = Invoke-App '/members/index.php?q=SMOKE002' $librarianSession
+Assert-Condition ($librarianBookList.Content.Contains('Delete</a>') -and $librarianMemberList.Content.Contains('Delete</a>')) 'librarian sees book and member delete actions'
 
 $issueForm = Invoke-App '/issues/create.php' $librarianSession
 $issueCsrf = Get-Csrf $issueForm.Content
@@ -422,14 +423,14 @@ Assert-Condition ($blockedBookDelete.Content.Contains('has lending history')) 'b
 $blockedMemberDelete = Invoke-App ("/members/delete.php?id=$memberId") $adminSession
 Assert-Condition ($blockedMemberDelete.Content.Contains('has lending history')) 'member with loan history cannot be deleted'
 
-$deleteBookPage = Invoke-App ("/books/delete.php?id=$secondBookId") $adminSession
+$deleteBookPage = Invoke-App ("/books/delete.php?id=$secondBookId") $librarianSession
 $deleteBookCsrf = Get-Csrf $deleteBookPage.Content
-$deletedBook = Invoke-App '/books/delete.php' $adminSession 'POST' @{ csrf_token = $deleteBookCsrf; book_id = $secondBookId }
-Assert-Condition ($deletedBook.StatusCode -eq 200 -and -not $deletedBook.Content.Contains('Smoke Test Deletable Book')) 'administrator can delete an unreferenced book with POST and CSRF'
-$deleteMemberPage = Invoke-App ("/members/delete.php?id=$secondMemberId") $adminSession
+$deletedBook = Invoke-App '/books/delete.php' $librarianSession 'POST' @{ csrf_token = $deleteBookCsrf; book_id = $secondBookId }
+Assert-Condition ($deletedBook.StatusCode -eq 200 -and -not $deletedBook.Content.Contains('Smoke Test Deletable Book')) 'librarian can delete an unreferenced book with POST and CSRF'
+$deleteMemberPage = Invoke-App ("/members/delete.php?id=$secondMemberId") $librarianSession
 $deleteMemberCsrf = Get-Csrf $deleteMemberPage.Content
-$deletedMember = Invoke-App '/members/delete.php' $adminSession 'POST' @{ csrf_token = $deleteMemberCsrf; member_id = $secondMemberId }
-Assert-Condition ($deletedMember.StatusCode -eq 200 -and -not $deletedMember.Content.Contains('Smoke Delete Target')) 'administrator can delete an unreferenced member with POST and CSRF'
+$deletedMember = Invoke-App '/members/delete.php' $librarianSession 'POST' @{ csrf_token = $deleteMemberCsrf; member_id = $secondMemberId }
+Assert-Condition ($deletedMember.StatusCode -eq 200 -and -not $deletedMember.Content.Contains('Smoke Delete Target')) 'librarian can delete an unreferenced member with POST and CSRF'
 $dashboard = Invoke-App '/index.php' $adminSession
 $reconciledReport = Invoke-App '/reports/index.php' $adminSession
 $dashboardTotals = @{

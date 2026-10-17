@@ -1,6 +1,6 @@
 <?php
 require dirname(__DIR__) . '/includes/bootstrap.php';
-require_role('admin');
+require_login();
 $conn = db();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

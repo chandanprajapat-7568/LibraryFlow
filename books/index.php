@@ -1,7 +1,6 @@
 <?php
 require dirname(__DIR__) . '/includes/bootstrap.php';
 $conn = db();
-$currentUser = current_user();
 $query = query_string('q');
 $query = limit_text($query, 100);
 
@@ -58,7 +57,7 @@ render_header('Books', 'books');
                     <td><?= (int) $book['total_copies'] ?></td>
                     <td><?= (int) $book['issued_copies'] ?></td>
                     <td><span class="availability <?= (int) $book['available_copies'] === 0 ? 'availability-zero' : '' ?>"><?= (int) $book['available_copies'] ?></span></td>
-                    <td class="row-actions"><a href="<?= e(url('/books/form.php?id=' . (int) $book['book_id'])) ?>">Edit</a><?php if (($currentUser['role'] ?? '') === 'admin'): ?><a class="danger-link" href="<?= e(url('/books/delete.php?id=' . (int) $book['book_id'])) ?>">Delete</a><?php endif; ?></td>
+                    <td class="row-actions"><a href="<?= e(url('/books/form.php?id=' . (int) $book['book_id'])) ?>">Edit</a><a class="danger-link" href="<?= e(url('/books/delete.php?id=' . (int) $book['book_id'])) ?>">Delete</a></td>
                 </tr>
             <?php endwhile; ?>
             </tbody>

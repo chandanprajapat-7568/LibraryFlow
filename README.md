@@ -17,6 +17,29 @@ The repository contains the application source, SQL schema, synthetic catalogue 
 - Offer the current Lachoo Memorial College programs in the member form and limit semester choices to each program's published duration.
 - Include the 206-record BCA V Semester classroom roster seed; local credentials, contact details and lending history stay out of Git.
 
+## Interface preview
+
+The screenshots follow the main LibraryFlow workflow from account access through catalogue and lending operations. Personal account names, the administrator email, and row-level loan details are hidden in these public previews.
+
+<table>
+  <tr>
+    <td width="50%"><strong>1. Staff sign-in</strong><br><img src="screenshots/01-staff-sign-in.png" alt="Library staff sign-in page" width="100%"><br><em>Authorized librarians sign in to the library workspace.</em></td>
+    <td width="50%"><strong>2. Administrator sign-in</strong><br><img src="screenshots/02-administrator-sign-in.png" alt="Library administrator sign-in page" width="100%"><br><em>Administrators use a separate sign-in route for account management.</em></td>
+  </tr>
+  <tr>
+    <td width="50%"><strong>3. Dashboard</strong><br><img src="screenshots/03-dashboard.png" alt="Library operations dashboard" width="100%"><br><em>Review catalogue, copy, member and overdue-loan totals, plus recent activity.</em></td>
+    <td width="50%"><strong>4. Book catalogue</strong><br><img src="screenshots/04-book-catalogue.png" alt="Book catalogue with search and record actions" width="100%"><br><em>Search the catalogue and manage book records and copy availability.</em></td>
+  </tr>
+  <tr>
+    <td width="50%"><strong>5. Issue and return register</strong><br><img src="screenshots/05-issue-return-register.png" alt="Issue and return register with private row details hidden" width="100%"><br><em>Filter lending records by status and open the book-issue workflow.</em></td>
+    <td width="50%"><strong>6. Issue a book</strong><br><img src="screenshots/06-issue-book.png" alt="New book issue form" width="100%"><br><em>Select an available title and eligible member, then set issue and due dates.</em></td>
+  </tr>
+  <tr>
+    <td width="50%"><strong>7. Add a member</strong><br><img src="screenshots/07-add-member.png" alt="New member form with course and semester selectors" width="100%"><br><em>Register a member with a college program, matching semester and optional group/contact details.</em></td>
+    <td width="50%"><strong>8. Staff access</strong><br><img src="screenshots/08-staff-access.png" alt="Administrator staff-access page" width="100%"><br><em>Administrators create and manage librarian accounts from the access-control page.</em></td>
+  </tr>
+</table>
+
 ## Architecture diagram
 
 ```mermaid

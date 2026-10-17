@@ -16,7 +16,6 @@
 /database/*.sql.gz
 /database/*.dump
 /database/*.bak
-/database/real_student_roster.sql
 
 # Operating system files
 Thumbs.db

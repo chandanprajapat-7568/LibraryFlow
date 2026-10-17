@@ -15,7 +15,7 @@ The repository contains the application source, SQL schema, synthetic catalogue 
 - Require new passwords to be at least 8 characters and include a lowercase letter, an uppercase letter and a special character. A late return starts a 10-day borrowing hold after the book is returned; an outstanding overdue loan also blocks new issues.
 - Let any signed-in staff member delete eligible book and member records; issue history remains protected by foreign keys.
 - Offer the current Lachoo Memorial College programs in the member form and limit semester choices to each program's published duration.
-- Keep real student roster data out of the public repository and HTTP-accessible database files.
+- Include the 206-record BCA V Semester classroom roster seed; local credentials, contact details and lending history stay out of Git.
 
 ## Architecture diagram
 
@@ -106,7 +106,7 @@ Administrators and librarians use separate sign-in pages, and each page accepts 
 1. Copy the project to htdocs/libraryflow.
 2. Start Apache and MySQL in XAMPP.
 3. In phpMyAdmin, import database/libraryflow.sql, then database/libraryflow_demo_data.sql for the catalogue.
-4. The public repository does not include real student roster data. If your institution separately supplies an approved local import, keep it on the trusted computer and outside Git; do not publish it or include real student details in screenshots.
+4. Import `database/real_student_roster.sql` after the schema and member-program migration to load the 206 BCA V Semester members. It contains roll numbers, names and section/group only; contact fields are empty and no issue history is inserted.
 5. If the local database settings differ, copy config/local.php.example to config/local.php and set the local credentials. config/local.php is ignored by Git. The default root with an empty password is for local XAMPP development only.
 6. From the same computer, open http://localhost/libraryflow/setup.php and create the first administrator. The one-time setup is limited to localhost and is disabled when APP_ENV=production.
 7. Administrators sign in at http://localhost/libraryflow/admin-login.php. Librarians sign in at http://localhost/libraryflow/login.php. The two pages only accept their matching account role. Administrators can manage librarian accounts under Staff access.
@@ -117,9 +117,9 @@ For an existing database, apply `database/migrations/20261017_member_programs.sq
 
 ## Database and sample data
 
-database/libraryflow.sql creates the catalogue, member, issue, staff-user, login-throttling and password-recovery tables. It does not insert staff passwords. database/libraryflow_demo_data.sql contains Project Gutenberg catalogue metadata only and records its source. Any approved real-student roster import is supplied and stored locally outside this public repository.
+database/libraryflow.sql creates the catalogue, member, issue, staff-user, login-throttling and password-recovery tables. It does not insert staff passwords. database/libraryflow_demo_data.sql contains Project Gutenberg catalogue metadata only and records its source. `database/real_student_roster.sql` seeds 206 BCA V Semester members with roll numbers, names and section/group; phone and email are left empty, and no lending history is included.
 
-Do not add real student contact data, borrowing history, database exports or backups to a public repository. Use only synthetic records for public screenshots. If sensitive information has already been committed, deleting the file in a later commit does not remove it from earlier Git history; follow GitHub's sensitive-data removal guidance.
+Do not add additional student contact details, borrowing history, database exports or backups to a public repository. Use only synthetic records for public screenshots. If sensitive information has already been committed, deleting the file in a later commit does not remove it from earlier Git history; follow GitHub's sensitive-data removal guidance.
 
 ## Roles
 
@@ -139,7 +139,7 @@ XAMPP is a local development setup, not a public production host. Before allowin
 - Use a maintained production server with HTTPS and a database user limited to this application's database. Set APP_ENV=production, LIBRARYFLOW_DB_HOST, LIBRARYFLOW_DB_NAME, LIBRARYFLOW_DB_USER and LIBRARYFLOW_DB_PASSWORD; never use MySQL root.
 - Create the first administrator while the server is restricted to localhost or an authenticated private tunnel, then switch to production mode before public access.
 - Confirm the host enforces the repository's .htaccess protections or configure equivalent server rules. The database, config, includes and tmp folders must not be downloadable.
-- Keep real student data on an institution-approved system. Complete and approve the deployment-specific privacy notice and terms with the responsible institution's name, contact, purpose, retention, backup and support details.
+- For live deployment, move student records from this classroom seed to an institution-approved private system. Complete and approve the deployment-specific privacy notice and terms with the responsible institution's name, contact, purpose, retention, backup and support details.
 - Configure encrypted backups, test restoration, restrict server/database administration, keep dependencies and PHP/MariaDB patched, and review logs so they do not contain student data or passwords.
 - Run the application's acceptance and security checks in a staging copy with synthetic records before importing real data.
 

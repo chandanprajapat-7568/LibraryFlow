@@ -106,7 +106,7 @@ Administrators and librarians use separate sign-in pages, and each page accepts 
 1. Copy the project to htdocs/libraryflow.
 2. Start Apache and MySQL in XAMPP.
 3. In phpMyAdmin, import database/libraryflow.sql, then database/libraryflow_demo_data.sql for the catalogue.
-4. Import `database/real_student_roster.sql` after the schema and member-program migration to load the 206 BCA V Semester members. It contains roll numbers, names and section/group only; contact fields are empty and no issue history is inserted.
+4. Import `database/bca_members.sql` after the schema and member-program migration to load the 206 BCA V Semester members. It contains roll numbers, names and section/group only; contact fields are empty and no issue history is inserted.
 5. If the local database settings differ, copy config/local.php.example to config/local.php and set the local credentials. config/local.php is ignored by Git. The default root with an empty password is for local XAMPP development only.
 6. From the same computer, open http://localhost/libraryflow/setup.php and create the first administrator. The one-time setup is limited to localhost and is disabled when APP_ENV=production.
 7. Administrators sign in at http://localhost/libraryflow/admin-login.php. Librarians sign in at http://localhost/libraryflow/login.php. The two pages only accept their matching account role. Administrators can manage librarian accounts under Staff access.
@@ -117,7 +117,7 @@ For an existing database, apply `database/migrations/20261017_member_programs.sq
 
 ## Database and sample data
 
-database/libraryflow.sql creates the catalogue, member, issue, staff-user, login-throttling and password-recovery tables. It does not insert staff passwords. database/libraryflow_demo_data.sql contains Project Gutenberg catalogue metadata only and records its source. `database/real_student_roster.sql` seeds 206 BCA V Semester members with roll numbers, names and section/group; phone and email are left empty, and no lending history is included.
+database/libraryflow.sql creates the catalogue, member, issue, staff-user, login-throttling and password-recovery tables. It does not insert staff passwords. database/libraryflow_demo_data.sql contains Project Gutenberg catalogue metadata only and records its source. `database/bca_members.sql` seeds 206 BCA V Semester members with roll numbers, names and section/group; phone and email are left empty, and no lending history is included.
 
 Do not add additional student contact details, borrowing history, database exports or backups to a public repository. Use only synthetic records for public screenshots. If sensitive information has already been committed, deleting the file in a later commit does not remove it from earlier Git history; follow GitHub's sensitive-data removal guidance.
 

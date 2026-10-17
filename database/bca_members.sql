@@ -1,8 +1,7 @@
 -- Classroom seed of 206 BCA V Semester roster records from the supplied group list.
 -- Contains roll numbers, full names, and section/group; phone and email fields are empty.
 -- Run after libraryflow.sql and database/migrations/20261017_member_programs.sql.
--- This removes synthetic DEMO members and their loans,
--- then inserts/updates the roster. Genuine issue records for roster students remain.
+-- Inserts or updates the roster without deleting existing members or loan history.
 SET NAMES utf8mb4;
 USE libraryflow;
 
@@ -222,13 +221,6 @@ INSERT INTO lf_bca_roster (roll_number, full_name, student_group) VALUES
 
 START TRANSACTION;
 
-DELETE FROM issue_records
-WHERE member_id IN (
-  SELECT member_id FROM members WHERE member_code LIKE 'DEMO-%'
-);
-
-DELETE FROM members WHERE member_code LIKE 'DEMO-%';
-
 INSERT INTO members (member_code, full_name, course, section_group, semester, phone, email)
 SELECT
   roster.roll_number,
@@ -243,9 +235,7 @@ ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name),
   course = VALUES(course),
   section_group = VALUES(section_group),
-  semester = VALUES(semester),
-  phone = NULL,
-  email = NULL;
+  semester = VALUES(semester);
 
 COMMIT;
 DROP TEMPORARY TABLE lf_bca_roster;

@@ -20,64 +20,79 @@ The repository contains the application source, SQL schema, synthetic catalogue 
 ## Architecture diagram
 
 ```mermaid
-flowchart LR
-    Staff["Staff user<br/>Administrator or librarian"]
+flowchart TB
+    Visitor["Visitor"] --> LibrarianLogin["Librarian sign in<br/>login.php"]
+    Visitor --> AdminLogin["Administrator sign in<br/>admin-login.php"]
+    LibrarianLogin --> RoleCheck["Credential and role check<br/>includes/auth.php"]
+    AdminLogin --> RoleCheck
+    RoleCheck -->|Librarian account| Librarian["Librarian session"]
+    RoleCheck -->|Administrator account| Administrator["Administrator session"]
 
-    subgraph BookWorkflow[Book records]
-        BookList["Catalogue list<br/>books/index.php"]
-        BookForm["Book form<br/>books/form.php"]
-        BookSave["Book save handler<br/>books/save.php"]
-        BookDelete["Book delete handler<br/>books/delete.php"]
-        BookList -->|Add or edit| BookForm
-        BookForm -->|POST form values| BookSave
-        BookList -->|Signed-in staff opens delete confirmation| BookDelete
+    subgraph LibraryWork["Library operations · both signed-in roles"]
+        BooksPage["Book catalogue<br/>books/index.php"] -->|Add or edit| BookForm["Book form<br/>books/form.php"]
+        BookForm -->|Submit| BookSave["Book save<br/>books/save.php"]
+        BooksPage -->|Delete request| BookDelete["Book delete<br/>books/delete.php"]
+
+        MembersPage["Member register<br/>members/index.php"] -->|Add or edit| MemberForm["Member form<br/>members/form.php"]
+        MemberForm -->|Choose official program and semester;<br/>enter section/group| MemberSave["Member save<br/>members/save.php"]
+        MembersPage -->|Delete request| MemberDelete["Member delete<br/>members/delete.php"]
+
+        Loans["Issue and return books<br/>issues/"]
+        Discovery["Search and reports<br/>search/ · reports/"]
     end
 
-    subgraph MemberWorkflow[Member records]
-        MemberList["Member list<br/>members/index.php"]
-        MemberForm["Member form<br/>members/form.php"]
-        MemberSave["Member save handler<br/>members/save.php"]
-        MemberDelete["Member delete handler<br/>members/delete.php"]
-        MemberList -->|Add or edit| MemberForm
-        MemberForm -->|POST form values| MemberSave
-        MemberList -->|Signed-in staff opens delete confirmation| MemberDelete
+    Librarian --> BooksPage
+    Librarian --> MembersPage
+    Librarian --> Loans
+    Librarian --> Discovery
+    Administrator --> BooksPage
+    Administrator --> MembersPage
+    Administrator --> Loans
+    Administrator --> Discovery
+
+    MemberForm -.->|Semester choices limited to program duration;<br/>validated again on save| ProgramRules["Program and semester rules<br/>includes/helpers.php"]
+
+    subgraph AdminOnly["Administrator-only account management"]
+        StaffAccess["Staff access<br/>admin/users.php"] --> StaffAccounts["Create, reset, deactivate,<br/>reactivate or remove librarian accounts"]
     end
+    Administrator --> StaffAccess
 
-    Staff --> BookList
-    Staff --> MemberList
-
-    BookDelete -->|POST with CSRF token: DELETE| Books[("books table")]
-    BookSave -->|INSERT new or UPDATE existing| Books
-    MemberDelete -->|POST with CSRF token: DELETE| Members[("members table")]
-    MemberSave -->|INSERT new or UPDATE existing| Members
-
-    BookDelete -.->|Foreign key blocks deletion when issue history exists| Issues[("issue_records table")]
-    MemberDelete -.->|Foreign key blocks deletion when issue history exists| Issues
-
-    subgraph SharedCore[Shared application core]
+    subgraph Core["Shared application core"]
         Bootstrap["Request bootstrap<br/>includes/bootstrap.php"]
-        Auth["Login and role checks<br/>includes/auth.php"]
-        Helpers["Shared helpers<br/>includes/helpers.php"]
+        Helpers["Shared rules and helpers<br/>includes/helpers.php"]
         Database["Database connection<br/>includes/db.php"]
-        Bootstrap --> Auth
         Bootstrap --> Helpers
         Bootstrap --> Database
     end
 
-    BookList -.-> Bootstrap
-    BookForm -.-> Bootstrap
+    BookSave -->|INSERT or UPDATE| BooksTable[("books")]
+    BookDelete -->|CSRF-protected POST| BooksTable
+    MemberSave -->|INSERT or UPDATE| MembersTable[("members")]
+    MemberDelete -->|CSRF-protected POST| MembersTable
+    Loans --> IssuesTable[("issue_records")]
+    StaffAccounts --> UsersTable[("users")]
+    Discovery --> BooksTable
+    Discovery --> MembersTable
+    Discovery --> IssuesTable
+
+    BookDelete -.->|Blocked when issue history exists| IssuesTable
+    MemberDelete -.->|Blocked when issue history exists| IssuesTable
+    Loans -->|Checks overdue loans and 10-day post-return hold| BorrowingRules["Borrowing eligibility"]
+
+    RoleCheck -.-> Bootstrap
     BookSave -.-> Bootstrap
     BookDelete -.-> Bootstrap
-    MemberList -.-> Bootstrap
-    MemberForm -.-> Bootstrap
     MemberSave -.-> Bootstrap
     MemberDelete -.-> Bootstrap
-    Database -->|mysqli queries| Books
-    Database -->|mysqli queries| Members
-    Database -->|mysqli queries| Issues
+    Loans -.-> Bootstrap
+    StaffAccess -.-> Bootstrap
+    Database --> BooksTable
+    Database --> MembersTable
+    Database --> IssuesTable
+    Database --> UsersTable
 ```
 
-`books/save.php` and `members/save.php` process submitted forms: they insert a record when no record ID is supplied and update the matching record when editing. The list pages link to the form pages. Any signed-in staff member can open a delete confirmation; the delete handlers require a CSRF-protected POST before removing a record. Database foreign keys prevent deletion when a book or member has issue history.
+Administrators and librarians use separate sign-in pages, and each page accepts only its matching account role. Both signed-in roles can add, edit and delete books and members. Delete requests require a CSRF-protected POST; database foreign keys prevent deleting records that have issue history. Only administrators can manage librarian accounts. Member program choices and semester limits are checked in the form and again by the save handler.
 
 ## Requirements
 

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS members (
   member_code VARCHAR(30) NOT NULL,
   full_name VARCHAR(150) NOT NULL,
   course VARCHAR(100) NULL,
+  section_group VARCHAR(80) NULL,
   semester TINYINT UNSIGNED NULL,
   phone VARCHAR(20) NULL,
   email VARCHAR(254) NULL,

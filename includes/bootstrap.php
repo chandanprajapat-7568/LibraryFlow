@@ -38,7 +38,7 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
 
-$guestRoutes = ['login.php', 'setup.php', 'forgot-password.php', 'reset-password.php', 'privacy.php', 'terms.php'];
+$guestRoutes = ['login.php', 'admin-login.php', 'setup.php', 'forgot-password.php', 'reset-password.php', 'privacy.php', 'terms.php'];
 $currentScript = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
 if (!in_array($currentScript, $guestRoutes, true)) {
     require_login();

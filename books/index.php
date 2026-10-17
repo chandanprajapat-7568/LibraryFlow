@@ -57,7 +57,7 @@ render_header('Books', 'books');
                     <td><?= (int) $book['total_copies'] ?></td>
                     <td><?= (int) $book['issued_copies'] ?></td>
                     <td><span class="availability <?= (int) $book['available_copies'] === 0 ? 'availability-zero' : '' ?>"><?= (int) $book['available_copies'] ?></span></td>
-                    <td class="row-actions"><a href="<?= e(url('/books/form.php?id=' . (int) $book['book_id'])) ?>">Edit</a><a class="danger-link" href="<?= e(url('/books/delete.php?id=' . (int) $book['book_id'])) ?>">Delete</a></td>
+                    <td class="actions-cell"><div class="row-actions"><a href="<?= e(url('/books/form.php?id=' . (int) $book['book_id'])) ?>">Edit</a><a class="danger-link" href="<?= e(url('/books/delete.php?id=' . (int) $book['book_id'])) ?>">Delete</a></div></td>
                 </tr>
             <?php endwhile; ?>
             </tbody>

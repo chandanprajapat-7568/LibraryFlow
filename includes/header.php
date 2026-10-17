@@ -55,7 +55,7 @@
                     </form>
                 </div>
             <?php else: ?>
-                <a class="topbar-note" href="<?= e(url('/login.php')) ?>">Staff sign in</a>
+                <div class="topbar-account"><a class="topbar-note" href="<?= e(url('/login.php')) ?>">Staff sign in</a><a class="topbar-note" href="<?= e(url('/admin-login.php')) ?>">Administrator sign in</a></div>
             <?php endif; ?>
         </header>
         <main class="content">

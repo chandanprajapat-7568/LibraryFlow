@@ -45,6 +45,31 @@ document.querySelectorAll('input[type="password"]').forEach((input, index) => {
     wrapper.append(toggle);
 });
 
+const courseSelect = document.querySelector('[data-course-select]');
+const semesterSelect = document.querySelector('[data-semester-select]');
+if (courseSelect instanceof HTMLSelectElement && semesterSelect instanceof HTMLSelectElement) {
+    const semesterHint = semesterSelect.closest('.form-field')?.querySelector('.semester-hint');
+    const refreshSemesters = () => {
+        const selectedOption = courseSelect.selectedOptions[0];
+        const maximum = Number.parseInt(selectedOption?.dataset.maxSemesters || '0', 10);
+        const previous = semesterSelect.value || semesterSelect.dataset.currentValue || '';
+        semesterSelect.replaceChildren(new Option('Not specified', ''));
+        for (let semester = 1; semester <= maximum; semester++) {
+            semesterSelect.add(new Option(`Semester ${semester}`, String(semester)));
+        }
+        semesterSelect.disabled = maximum < 1;
+        if (previous !== '' && Number(previous) <= maximum) semesterSelect.value = previous;
+        semesterSelect.dataset.currentValue = '';
+        if (semesterHint) {
+            semesterHint.textContent = maximum > 0
+                ? `This program has ${maximum} semesters.`
+                : 'Select a course first; the semester limit will match its duration.';
+        }
+    };
+    courseSelect.addEventListener('change', refreshSemesters);
+    refreshSemesters();
+}
+
 document.querySelectorAll('[data-password-rules]').forEach((input) => {
     const updatePasswordRules = () => {
         const value = input.value;

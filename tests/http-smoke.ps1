@@ -65,7 +65,9 @@ Assert-Condition ($terms.StatusCode -eq 200 -and $terms.Content.Contains('Terms 
 
 $loginPage = Invoke-App '/login.php' $guest
 $csrf = Get-Csrf $loginPage.Content
-Assert-Condition ($loginPage.Content.Contains('Forgot password?') -and -not $loginPage.Content.Contains('data-password-rules')) 'sign-in offers recovery without showing new-password rules'
+Assert-Condition ($loginPage.Content.Contains('Forgot password?') -and $loginPage.Content.Contains('Administrator sign in') -and -not $loginPage.Content.Contains('data-password-rules')) 'staff sign-in offers recovery and administrator access without new-password rules'
+$adminLoginPage = Invoke-App '/admin-login.php' $guest
+Assert-Condition ($adminLoginPage.StatusCode -eq 200 -and $adminLoginPage.Content.Contains('Administrator access') -and $adminLoginPage.Content.Contains('Staff sign in')) 'separate administrator sign-in page is public and links back to staff access'
 $clientPasswordScript = Invoke-App '/assets/js/app.js' $guest
 Assert-Condition ($clientPasswordScript.Content.Contains('password-visibility-toggle') -and $clientPasswordScript.Content.Contains("toggle.textContent = showing ? 'Hide' : 'Show'")) 'password fields include an accessible show/hide control'
 for ($i = 1; $i -le 6; $i++) {
@@ -102,16 +104,22 @@ $setupResult = Invoke-App '/setup.php' $adminSession 'POST' @{
 }
 Assert-Condition ($setupResult.StatusCode -eq 200 -and $setupResult.Content.Contains('Sign in')) 'first administrator is created without a default password'
 
-$loginPage = Invoke-App '/login.php' $adminSession
-$loginCsrf = Get-Csrf $loginPage.Content
+$wrongAdministratorPortal = Invoke-App '/login.php' $adminSession 'POST' @{
+    csrf_token = (Get-Csrf (Invoke-App '/login.php' $adminSession).Content)
+    email = 'admin@example.test'
+    password = $adminPassword
+}
+Assert-Condition ($wrongAdministratorPortal.Content.Contains('Email or password is incorrect') -and -not $wrongAdministratorPortal.Content.Contains('Library overview')) 'administrator account cannot sign in through the staff portal'
+$adminLoginPage = Invoke-App '/admin-login.php' $adminSession
+$loginCsrf = Get-Csrf $adminLoginPage.Content
 $sessionBeforeLogin = Get-CookieValue $adminSession 'PHPSESSID'
-$signedIn = Invoke-App '/login.php' $adminSession 'POST' @{
+$signedIn = Invoke-App '/admin-login.php' $adminSession 'POST' @{
     csrf_token = $loginCsrf
     email = 'admin@example.test'
     password = $adminPassword
 }
 $sessionAfterLogin = Get-CookieValue $adminSession 'PHPSESSID'
-Assert-Condition ($signedIn.Content.Contains('Library overview')) 'administrator sign-in succeeds'
+Assert-Condition ($signedIn.Content.Contains('Library overview')) 'administrator signs in through the administrator portal'
 $primaryNav = [regex]::Match($signedIn.Content, '(?s)<nav class="primary-nav">(.*?)</nav>').Groups[1].Value
 Assert-Condition ($primaryNav.IndexOf('>Search</a>') -lt $primaryNav.IndexOf('>Dashboard</a>') -and $primaryNav.Contains('Change password') -and -not $signedIn.Content.Contains('topbar-note">Password')) 'search is first in the navigation and password settings are in the sidebar'
 Assert-Condition (-not $loginPage.Content.Contains('password-rules') -and -not $loginPage.Content.Contains('data-password-rules')) 'password rules are hidden from the sign-in form'
@@ -223,12 +231,26 @@ Assert-Condition ($duplicateBook.Content.Contains('already assigned')) 'duplicat
 $memberName = 'Smoke <script>alert(1)</script>'
 $memberForm = Invoke-App '/members/form.php' $adminSession
 $memberCsrf = Get-Csrf $memberForm.Content
+Assert-Condition ($memberForm.Content.Contains('BSc - CBZ (Chemistry, Botany, Zoology)') -and $memberForm.Content.Contains('value="BCA"') -and $memberForm.Content.Contains('data-max-semesters="6"')) 'member course selector lists college programs with semester limits'
+$invalidMemberSemester = Invoke-App '/members/save.php' $adminSession 'POST' @{
+    csrf_token = $memberCsrf
+    member_id = ''
+    member_code = 'INVALIDSEM'
+    full_name = 'Invalid Semester Test'
+    course = 'BCA'
+    section_group = ''
+    semester = '7'
+    phone = ''
+    email = ''
+}
+Assert-Condition ($invalidMemberSemester.Content.Contains('maximum of 6 semesters')) 'server rejects semester values above the selected program duration'
 $memberResponse = Invoke-App '/members/save.php' $adminSession 'POST' @{
     csrf_token = $memberCsrf
     member_id = ''
     member_code = 'SMOKE001'
     full_name = $memberName
-    course = 'Test Course'
+    course = 'BCA'
+    section_group = 'Section A, Group A1'
     semester = '5'
     phone = ''
     email = ''
@@ -236,6 +258,7 @@ $memberResponse = Invoke-App '/members/save.php' $adminSession 'POST' @{
 $memberList = Invoke-App '/members/index.php?q=SMOKE001' $adminSession
 $memberIdMatch = [regex]::Match($memberList.Content, 'SMOKE001\s+·\s+ID\s+(\d+)')
 Assert-Condition ($memberResponse.StatusCode -eq 200 -and $memberIdMatch.Success) 'member creation and code search work'
+Assert-Condition ($memberList.Content.Contains('Section A, Group A1')) 'member register retains the section and group alongside the selected program'
 $memberId = $memberIdMatch.Groups[1].Value
 Assert-Condition ($memberList.Content.Contains('&lt;script&gt;alert(1)&lt;/script&gt;') -and -not $memberList.Content.Contains('<script>alert(1)</script>')) 'member text is HTML-escaped'
 $memberNameSearch = Invoke-App '/search/index.php?q=Smoke&type=members' $adminSession
@@ -265,7 +288,8 @@ $secondMemberResult = Invoke-App '/members/save.php' $adminSession 'POST' @{
     member_id = ''
     member_code = 'SMOKE002'
     full_name = 'Smoke Delete Target'
-    course = 'Test Course'
+    course = 'BCA'
+    section_group = ''
     semester = '5'
     phone = ''
     email = ''
@@ -286,6 +310,14 @@ $staffResult = Invoke-App '/admin/users.php' $adminSession 'POST' @{
     password = $librarianPassword
 }
 Assert-Condition ($staffResult.StatusCode -eq 200 -and $staffResult.Content.Contains('Smoke Librarian')) 'administrator can create a librarian account'
+$librarianOnAdminPortal = New-WebSession
+$librarianAdminPage = Invoke-App '/admin-login.php' $librarianOnAdminPortal
+$librarianAdminAttempt = Invoke-App '/admin-login.php' $librarianOnAdminPortal 'POST' @{
+    csrf_token = (Get-Csrf $librarianAdminPage.Content)
+    email = 'librarian@example.test'
+    password = $librarianPassword
+}
+Assert-Condition ($librarianAdminAttempt.Content.Contains('Email or password is incorrect') -and -not $librarianAdminAttempt.Content.Contains('Library overview')) 'librarian account cannot sign in through the administrator portal'
 $usersForAdminCheck = Invoke-App '/admin/users.php' $adminSession
 $adminRow = [regex]::Match($usersForAdminCheck.Content, '(?s)<tr>.*?admin@example\.test.*?</tr>').Value
 $firstAdminId = [regex]::Match($adminRow, 'Protected administrator account').Success
@@ -333,7 +365,7 @@ $librarianDeletePage = Invoke-App ("/books/delete.php?id=$secondBookId") $librar
 Assert-Condition ($librarianDeletePage.StatusCode -eq 200 -and $librarianDeletePage.Content.Contains('Delete book record')) 'librarian can open a book delete confirmation'
 $librarianBookList = Invoke-App '/books/index.php?q=Smoke%20Test' $librarianSession
 $librarianMemberList = Invoke-App '/members/index.php?q=SMOKE002' $librarianSession
-Assert-Condition ($librarianBookList.Content.Contains('Delete</a>') -and $librarianMemberList.Content.Contains('Delete</a>')) 'librarian sees book and member delete actions'
+Assert-Condition ($librarianBookList.Content.Contains('class="actions-cell"><div class="row-actions">') -and $librarianMemberList.Content.Contains('class="actions-cell"><div class="row-actions">') -and $librarianBookList.Content.Contains('>Delete</a>') -and $librarianMemberList.Content.Contains('>Delete</a>')) 'librarian sees aligned delete actions for books and members'
 
 $issueForm = Invoke-App '/issues/create.php' $librarianSession
 $issueCsrf = Get-Csrf $issueForm.Content

@@ -110,6 +110,71 @@ function valid_password(string $password): bool
     return !in_array(false, password_requirements($password), true);
 }
 
+function course_catalog(): array
+{
+    return [
+        'Science' => [
+            'BSc - PCM' => ['label' => 'BSc - PCM (Physics, Chemistry, Mathematics)', 'semesters' => 6],
+            'BSc - PMCS' => ['label' => 'BSc - PMCS (Physics, Mathematics, Computer Science)', 'semesters' => 6],
+            'BSc - CBZ' => ['label' => 'BSc - CBZ (Chemistry, Botany, Zoology)', 'semesters' => 6],
+            'BSc - CZBT' => ['label' => 'BSc - CZBT (Chemistry, Zoology, Biotechnology)', 'semesters' => 6],
+            'MSc - Physics' => ['label' => 'MSc - Physics', 'semesters' => 4],
+            'MSc - Chemistry' => ['label' => 'MSc - Chemistry', 'semesters' => 4],
+            'MSc - Mathematics' => ['label' => 'MSc - Mathematics', 'semesters' => 4],
+            'MSc - Botany' => ['label' => 'MSc - Botany', 'semesters' => 4],
+            'MSc - Zoology' => ['label' => 'MSc - Zoology', 'semesters' => 4],
+            'MSc - Biotechnology' => ['label' => 'MSc - Biotechnology', 'semesters' => 4],
+            'MSc - Microbiology' => ['label' => 'MSc - Microbiology', 'semesters' => 4],
+            'MPH' => ['label' => 'MPH - Master of Public Health', 'semesters' => 4],
+            'Diploma - Nutrition and Dietetics' => ['label' => 'Diploma - Nutrition and Dietetics', 'semesters' => 2],
+        ],
+        'Pharmacy' => [
+            'DPharm' => ['label' => 'DPharm - Diploma in Pharmacy', 'semesters' => 4],
+            'BPharm' => ['label' => 'BPharm - Bachelor of Pharmacy', 'semesters' => 8],
+        ],
+        'Computer Science' => [
+            'BCA' => ['label' => 'BCA - Bachelor of Computer Applications', 'semesters' => 6],
+            'MCA' => ['label' => 'MCA - Master of Computer Applications', 'semesters' => 4],
+        ],
+        'Commerce and Management' => [
+            'BBA' => ['label' => 'BBA - Bachelor of Business Administration', 'semesters' => 6],
+            'BCom' => ['label' => 'BCom - Bachelor of Commerce', 'semesters' => 6],
+            'MBA' => ['label' => 'MBA - Master of Business Administration', 'semesters' => 4],
+        ],
+        'Physiotherapy' => [
+            'BPT' => ['label' => 'BPT - Bachelor of Physiotherapy', 'semesters' => 8],
+        ],
+        'Engineering' => [
+            'BTech - CSE' => ['label' => 'BTech - Computer Science and Engineering', 'semesters' => 8],
+            'BTech - CSE (AI and ML)' => ['label' => 'BTech - Computer Science and Engineering (AI and ML)', 'semesters' => 8],
+            'BTech - ECE' => ['label' => 'BTech - Electronics and Communication Engineering', 'semesters' => 8],
+            'BTech - CSE (Lateral Entry)' => ['label' => 'BTech - Computer Science and Engineering (Lateral Entry)', 'semesters' => 6],
+            'BTech - CSE (AI and ML, Lateral Entry)' => ['label' => 'BTech - Computer Science and Engineering (AI and ML, Lateral Entry)', 'semesters' => 6],
+            'BTech - ECE (Lateral Entry)' => ['label' => 'BTech - Electronics and Communication Engineering (Lateral Entry)', 'semesters' => 6],
+        ],
+    ];
+}
+
+function valid_course(string $course): bool
+{
+    foreach (course_catalog() as $programs) {
+        if (array_key_exists($course, $programs)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function course_semester_limit(string $course): int
+{
+    foreach (course_catalog() as $programs) {
+        if (isset($programs[$course])) {
+            return (int) $programs[$course]['semesters'];
+        }
+    }
+    return 0;
+}
+
 function limit_text(string $value, int $maximum): string
 {
     if (function_exists('mb_substr')) {

@@ -119,18 +119,19 @@ function clear_login_failures(string $email): void
     $statement->execute();
 }
 
-function attempt_login(string $email, string $password): array
+function attempt_login(string $email, string $password, string $requiredRole): array
 {
     $email = strtolower(trim($email));
     if (login_is_rate_limited($email)) {
         return ['ok' => false, 'message' => 'Too many attempts. Wait 15 minutes, then try again.'];
     }
 
-    $statement = db()->prepare('SELECT user_id, password_hash, is_active, session_version FROM users WHERE email = ? LIMIT 1');
+    $statement = db()->prepare('SELECT user_id, password_hash, role, is_active, session_version FROM users WHERE email = ? LIMIT 1');
     $statement->bind_param('s', $email);
     $statement->execute();
     $account = $statement->get_result()->fetch_assoc();
-    if (!$account || !(bool) $account['is_active'] || !password_verify($password, (string) $account['password_hash'])) {
+    $passwordMatches = $account && password_verify($password, (string) $account['password_hash']);
+    if (!$account || !(bool) $account['is_active'] || !$passwordMatches || !hash_equals($requiredRole, (string) $account['role'])) {
         record_login_failure($email);
         return ['ok' => false, 'message' => 'Email or password is incorrect.'];
     }

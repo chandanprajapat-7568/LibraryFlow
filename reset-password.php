@@ -50,7 +50,7 @@ $tokenIsValid = !$complete && valid_password_reset_token($token) !== null;
     <?php if ($complete): ?>
         <h1>Password updated</h1>
         <div class="notice notice-success" role="status">Your password has been changed. Other active sessions have been signed out.</div>
-        <a class="button button-primary" href="<?= e(url('/login.php')) ?>">Continue to sign in</a>
+        <div class="heading-actions"><a class="button button-primary" href="<?= e(url('/login.php')) ?>">Staff sign in</a><a class="button button-secondary" href="<?= e(url('/admin-login.php')) ?>">Administrator sign in</a></div>
     <?php elseif ($tokenIsValid): ?>
         <h1>Set a new password</h1>
         <p class="page-intro">Choose at least 8 characters with a lowercase letter, an uppercase letter and a special character. This link can only be used once and expires after one hour.</p>

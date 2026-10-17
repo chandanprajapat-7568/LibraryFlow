@@ -20,6 +20,7 @@ $values = [
     'member_code' => post_string('member_code'),
     'full_name' => post_string('full_name'),
     'course' => post_string('course'),
+    'section_group' => post_string('section_group'),
     'semester' => post_string('semester'),
     'phone' => post_string('phone'),
     'email' => post_string('email'),
@@ -30,11 +31,13 @@ if ($values['member_code'] === '') $errors['member_code'] = 'Enter a member code
 elseif (text_length($values['member_code']) > 30) $errors['member_code'] = 'The member code must be 30 characters or fewer.';
 if ($values['full_name'] === '') $errors['full_name'] = 'Enter the member name.';
 elseif (text_length($values['full_name']) > 150) $errors['full_name'] = 'The name must be 150 characters or fewer.';
-if (text_length($values['course']) > 100) $errors['course'] = 'The course must be 100 characters or fewer.';
+if (!valid_course($values['course'])) $errors['course'] = 'Choose a program from the college course list.';
+if (text_length($values['section_group']) > 80) $errors['section_group'] = 'The section or group must be 80 characters or fewer.';
 if ($values['semester'] === '') $semester = null;
 else {
-    $semester = filter_var($values['semester'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 255]]);
-    if ($semester === false) $errors['semester'] = 'Enter a positive whole semester number.';
+    $semester = filter_var($values['semester'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 8]]);
+    if ($semester === false) $errors['semester'] = 'Choose a semester from 1 to 8.';
+    elseif (valid_course($values['course']) && $semester > course_semester_limit($values['course'])) $errors['semester'] = 'This program has a maximum of ' . course_semester_limit($values['course']) . ' semesters.';
 }
 if (text_length($values['phone']) > 20 || ($values['phone'] !== '' && !preg_match('/^[0-9+().\s-]{6,20}$/', $values['phone']))) $errors['phone'] = 'Enter a phone number using digits and common separators.';
 if (text_length($values['email']) > 254 || ($values['email'] !== '' && !filter_var($values['email'], FILTER_VALIDATE_EMAIL))) $errors['email'] = 'Enter a valid email address.';
@@ -44,6 +47,7 @@ if ($errors) {
     redirect($formUrl);
 }
 $course = $values['course'] === '' ? null : $values['course'];
+$sectionGroup = $values['section_group'] === '' ? null : $values['section_group'];
 $phone = $values['phone'] === '' ? null : $values['phone'];
 $email = $values['email'] === '' ? null : $values['email'];
 
@@ -67,13 +71,13 @@ try {
         redirect($formUrl);
     }
     if ($id > 0) {
-        $statement = $conn->prepare('UPDATE members SET member_code = ?, full_name = ?, course = ?, semester = ?, phone = ?, email = ? WHERE member_id = ?');
-        $statement->bind_param('sssissi', $values['member_code'], $values['full_name'], $course, $semester, $phone, $email, $id);
+        $statement = $conn->prepare('UPDATE members SET member_code = ?, full_name = ?, course = ?, section_group = ?, semester = ?, phone = ?, email = ? WHERE member_id = ?');
+        $statement->bind_param('ssssissi', $values['member_code'], $values['full_name'], $course, $sectionGroup, $semester, $phone, $email, $id);
         $statement->execute();
         set_flash('success', 'Member changes saved.');
     } else {
-        $statement = $conn->prepare('INSERT INTO members (member_code, full_name, course, semester, phone, email) VALUES (?, ?, ?, ?, ?, ?)');
-        $statement->bind_param('sssiss', $values['member_code'], $values['full_name'], $course, $semester, $phone, $email);
+        $statement = $conn->prepare('INSERT INTO members (member_code, full_name, course, section_group, semester, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $statement->bind_param('ssssiss', $values['member_code'], $values['full_name'], $course, $sectionGroup, $semester, $phone, $email);
         $statement->execute();
         set_flash('success', 'Member added to the register.');
     }

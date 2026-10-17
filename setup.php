@@ -10,7 +10,7 @@ if (getenv('APP_ENV') === 'production' || !in_array($remoteAddress, ['127.0.0.1'
 $conn = db();
 $userCount = (int) $conn->query('SELECT COUNT(*) FROM users')->fetch_row()[0];
 if ($userCount > 0) {
-    redirect('/login.php');
+    redirect('/admin-login.php');
 }
 
 $displayName = '';
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert->bind_param('ssss', $displayName, $email, $hash, $role);
             $insert->execute();
             set_flash('success', 'Administrator created. Sign in with the email and password you chose.');
-            redirect('/login.php');
+            redirect('/admin-login.php');
         } catch (mysqli_sql_exception $exception) {
             $error = (int) $exception->getCode() === 1062
                 ? 'That email is already in use.'
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="setup-page">
 <main class="setup-card">
-    <a class="brand auth-brand" href="<?= e(url('/login.php')) ?>"><span class="brand-mark" aria-hidden="true">L</span><span><strong>LibraryFlow</strong><small>Library operations</small></span></a>
+    <a class="brand auth-brand" href="<?= e(url('/admin-login.php')) ?>"><span class="brand-mark" aria-hidden="true">L</span><span><strong>LibraryFlow</strong><small>Library operations</small></span></a>
     <div class="eyebrow">One-time setup</div>
     <h1>Create the first administrator</h1>
     <p class="page-intro">This setup works only from this computer and only while no staff account exists. Use at least 8 characters, including a lowercase letter, an uppercase letter and a special character.</p>
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="form-field"><label for="confirm_password">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" minlength="8" maxlength="200" required autocomplete="new-password"></div>
         <button class="button button-primary" type="submit">Create administrator</button>
     </form>
-    <p class="auth-legal"><a href="<?= e(url('/login.php')) ?>">Back to sign in</a></p>
+    <p class="auth-legal"><a href="<?= e(url('/admin-login.php')) ?>">Back to administrator sign in</a></p>
 </main>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 LibraryFlow is a PHP and MariaDB library operations application for managing a book catalogue, members, loans, returns and inventory reports. Staff sign in with an administrator or librarian account.
 
-The complete project report is available as [Word](docs/LibraryFlow_ERP_Project_Report.docx) and [Markdown](docs/PROJECT_REPORT.md).
+The repository contains the application source, SQL schema, synthetic catalogue data and this setup guide.
 
 ## Features
 
@@ -15,6 +15,68 @@ The complete project report is available as [Word](docs/LibraryFlow_ERP_Project_
 - Require new passwords to be at least 8 characters and include a lowercase letter, an uppercase letter and a special character. A late return starts a 10-day borrowing hold after the book is returned; an outstanding overdue loan also blocks new issues.
 - Restrict destructive book/member deletes to administrators.
 - Keep real student roster data out of the public repository and HTTP-accessible database files.
+
+## Architecture diagram
+
+```mermaid
+flowchart LR
+    Staff["Staff user<br/>Administrator or librarian"]
+
+    subgraph BookWorkflow[Book records]
+        BookList["Catalogue list<br/>books/index.php"]
+        BookForm["Book form<br/>books/form.php"]
+        BookSave["Book save handler<br/>books/save.php"]
+        BookDelete["Book delete handler<br/>books/delete.php"]
+        BookList -->|Add or edit| BookForm
+        BookForm -->|POST form values| BookSave
+        BookList -->|Administrator opens delete confirmation| BookDelete
+    end
+
+    subgraph MemberWorkflow[Member records]
+        MemberList["Member list<br/>members/index.php"]
+        MemberForm["Member form<br/>members/form.php"]
+        MemberSave["Member save handler<br/>members/save.php"]
+        MemberDelete["Member delete handler<br/>members/delete.php"]
+        MemberList -->|Add or edit| MemberForm
+        MemberForm -->|POST form values| MemberSave
+        MemberList -->|Administrator opens delete confirmation| MemberDelete
+    end
+
+    Staff --> BookList
+    Staff --> MemberList
+
+    BookDelete -->|POST with CSRF token: DELETE| Books[("books table")]
+    BookSave -->|INSERT new or UPDATE existing| Books
+    MemberDelete -->|POST with CSRF token: DELETE| Members[("members table")]
+    MemberSave -->|INSERT new or UPDATE existing| Members
+
+    BookDelete -.->|Foreign key blocks deletion when issue history exists| Issues[("issue_records table")]
+    MemberDelete -.->|Foreign key blocks deletion when issue history exists| Issues
+
+    subgraph SharedCore[Shared application core]
+        Bootstrap["Request bootstrap<br/>includes/bootstrap.php"]
+        Auth["Login and role checks<br/>includes/auth.php"]
+        Helpers["Shared helpers<br/>includes/helpers.php"]
+        Database["Database connection<br/>includes/db.php"]
+        Bootstrap --> Auth
+        Bootstrap --> Helpers
+        Bootstrap --> Database
+    end
+
+    BookList -.-> Bootstrap
+    BookForm -.-> Bootstrap
+    BookSave -.-> Bootstrap
+    BookDelete -.-> Bootstrap
+    MemberList -.-> Bootstrap
+    MemberForm -.-> Bootstrap
+    MemberSave -.-> Bootstrap
+    MemberDelete -.-> Bootstrap
+    Database -->|mysqli queries| Books
+    Database -->|mysqli queries| Members
+    Database -->|mysqli queries| Issues
+```
+
+`books/save.php` and `members/save.php` process submitted forms: they insert a record when no record ID is supplied and update the matching record when editing. The list pages link to the form pages. The delete links appear only for administrators; the delete handlers require a CSRF-protected POST before removing a record. Database foreign keys prevent deletion when a book or member has issue history.
 
 ## Requirements
 
@@ -56,7 +118,7 @@ XAMPP is a local development setup, not a public production host. Before allowin
 
 - Use a maintained production server with HTTPS and a database user limited to this application's database. Set APP_ENV=production, LIBRARYFLOW_DB_HOST, LIBRARYFLOW_DB_NAME, LIBRARYFLOW_DB_USER and LIBRARYFLOW_DB_PASSWORD; never use MySQL root.
 - Create the first administrator while the server is restricted to localhost or an authenticated private tunnel, then switch to production mode before public access.
-- Confirm the host enforces the repository's .htaccess protections or configure equivalent server rules. The database, config, includes, docs and tmp folders must not be downloadable.
+- Confirm the host enforces the repository's .htaccess protections or configure equivalent server rules. The database, config, includes and tmp folders must not be downloadable.
 - Keep real student data on an institution-approved system. Complete and approve the deployment-specific privacy notice and terms with the responsible institution's name, contact, purpose, retention, backup and support details.
 - Configure encrypted backups, test restoration, restrict server/database administration, keep dependencies and PHP/MariaDB patched, and review logs so they do not contain student data or passwords.
 - Run the application's acceptance and security checks in a staging copy with synthetic records before importing real data.

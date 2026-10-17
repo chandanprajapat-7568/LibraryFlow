@@ -1,6 +1,7 @@
 <?php
 require dirname(__DIR__) . '/includes/bootstrap.php';
 $conn = db();
+$currentUser = current_user();
 $query = query_string('q');
 $query = limit_text($query, 100);
 
